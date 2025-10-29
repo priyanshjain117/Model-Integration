@@ -12,7 +12,7 @@ with open('vectorizer.pkl', 'rb') as f:
 
 @app.route('/')
 def home():
-    return "✅ Fake News Detector API is running!"
+    return "✅ Fake News Detector API is running!!!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
