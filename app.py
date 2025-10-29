@@ -3,24 +3,28 @@ import pickle
 
 app = Flask(__name__)
 
-# Load your model
-model = pickle.load(open('fake_news_model.pkl', 'rb'))
+# Load both model and vectorizer
+with open('fake_news_model.pkl', 'rb') as f:
+    model = pickle.load(f)
+
+with open('vectorizer.pkl', 'rb') as f:
+    vectorizer = pickle.load(f)
 
 @app.route('/')
 def home():
-    return "Fake News Detector API is running!"
+    return "✅ Fake News Detector API is running!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
-    text = data['text']
+    text = data.get('text', '')
     
-    # Preprocess (make sure same preprocessing as training)
-    # For example:
-    # text = preprocess(text)
+    # Transform text before prediction
+    X_input = vectorizer.transform([text])
+    prediction = model.predict(X_input)[0]
     
-    prediction = model.predict([text])[0]
-    return jsonify({'prediction': str(prediction)})
+    result = 'Fake' if prediction == 1 else 'Real'
+    return jsonify({'prediction': result})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)
