@@ -61,7 +61,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
-                        <span id="btnText">Analyze Content</span>
+                        <span>Analyze Content</span>
                     </button>
                 </form>
             </div>
@@ -92,14 +92,12 @@
                 <!-- Model Prediction Badge -->
                 <div class="text-center mb-6">
                     <div class="inline-block px-6 py-3 rounded-full text-white font-bold text-lg" id="modelPrediction">
-                        <!-- Will be filled by JS -->
                     </div>
                     <p class="text-sm text-gray-600 mt-2">
                         Confidence: <span id="modelConfidence" class="font-semibold"></span>
                     </p>
                 </div>
 
-                <!-- Indicators Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="border-2 border-gray-100 rounded-lg p-4">
                         <div class="flex items-center gap-2 mb-2">
@@ -143,27 +141,16 @@
                     </div>
                 </div>
 
-                <!-- Recommendations -->
                 <div id="recommendations" class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
                     <h4 class="font-bold text-blue-900 mb-2">Recommendations</h4>
                     <ul id="recommendationsList" class="text-blue-800 text-sm space-y-1"></ul>
                 </div>
             </div>
-
-            <!-- Info Footer -->
-            <div class="text-center text-gray-500 text-sm mt-8">
-                <p>This is a demonstration tool. Always verify important news with multiple trusted sources.</p>
-            </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('newsForm');
-        const results = document.getElementById('results');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const btnText = document.getElementById('btnText');
-
-        form.addEventListener('submit', async (e) => {
+        document.getElementById('newsForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const inputText = document.getElementById('inputText').value.trim();
@@ -172,140 +159,105 @@
                 return;
             }
             
-            // Show loading state
-            analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = `
-                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Analyzing...</span>
-            `;
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const results = document.getElementById('results');
             
+            // Show loading
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div><span>Analyzing...</span>';
+            
+            // Create form data
             const formData = new FormData();
             formData.append('news_text', inputText);
             
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                });
+            // Send request
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Received data:', data);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
                 }
                 
-                const data = await response.json();
-                console.log('Response data:', data); // Debug log
-                
-                // Display results
                 displayResults(data);
-                
-                // Show results section
                 results.classList.remove('hidden');
                 results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while analyzing. Please try again.');
-            } finally {
+                alert('An error occurred. Please try again.');
+            })
+            .finally(() => {
                 // Reset button
                 analyzeBtn.disabled = false;
-                analyzeBtn.innerHTML = `
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <span>Analyze Content</span>
-                `;
-            }
+                analyzeBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Analyze Content</span>';
+            });
         });
 
         function displayResults(data) {
-            const score = data.score || 0;
-            const status = data.status || 'unknown';
-            const indicators = data.indicators || {};
-            const modelPrediction = data.model_prediction || 'UNKNOWN';
-            const confidenceReal = data.confidence_real || 0;
-            
             // Status icon
             const statusIcon = document.getElementById('statusIcon');
-            if (status === 'reliable') {
-                statusIcon.innerHTML = `<svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-            } else if (status === 'questionable') {
-                statusIcon.innerHTML = `<svg class="w-16 h-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+            if (data.status === 'reliable') {
+                statusIcon.innerHTML = '<svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else if (data.status === 'questionable') {
+                statusIcon.innerHTML = '<svg class="w-16 h-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
             } else {
-                statusIcon.innerHTML = `<svg class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                statusIcon.innerHTML = '<svg class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             }
             
             // Status text
-            const statusText = document.getElementById('statusText');
-            statusText.textContent = status;
-            statusText.className = `text-3xl font-bold mt-4 mb-2 capitalize ${getStatusColor(status)}`;
+            document.getElementById('statusText').textContent = data.status;
+            document.getElementById('statusText').className = 'text-3xl font-bold mt-4 mb-2 capitalize ' + 
+                (data.status === 'reliable' ? 'text-green-600' : data.status === 'questionable' ? 'text-yellow-600' : 'text-red-600');
             
-            // Model prediction badge
-            const modelPredictionEl = document.getElementById('modelPrediction');
-            if (modelPrediction === 'REAL') {
-                modelPredictionEl.className = 'inline-block px-6 py-3 rounded-full bg-green-500 text-white font-bold text-lg';
-                modelPredictionEl.textContent = '✓ REAL NEWS';
+            // Model prediction
+            const modelPrediction = document.getElementById('modelPrediction');
+            if (data.model_prediction === 'REAL') {
+                modelPrediction.className = 'inline-block px-6 py-3 rounded-full bg-green-500 text-white font-bold text-lg';
+                modelPrediction.textContent = '✓ REAL NEWS';
             } else {
-                modelPredictionEl.className = 'inline-block px-6 py-3 rounded-full bg-red-500 text-white font-bold text-lg';
-                modelPredictionEl.textContent = '✗ FAKE NEWS';
+                modelPrediction.className = 'inline-block px-6 py-3 rounded-full bg-red-500 text-white font-bold text-lg';
+                modelPrediction.textContent = '✗ FAKE NEWS';
             }
             
-            // Model confidence
-            document.getElementById('modelConfidence').textContent = confidenceReal.toFixed(1) + '%';
+            document.getElementById('modelConfidence').textContent = data.confidence_real.toFixed(1) + '%';
             
             // Score
-            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('scoreValue').textContent = data.score;
             const scoreBar = document.getElementById('scoreBar');
-            scoreBar.className = `h-full ${getScoreBarColor(score)} transition-all duration-1000`;
-            setTimeout(() => {
-                scoreBar.style.width = `${score}%`;
-            }, 100);
+            const scoreColor = data.score >= 70 ? 'bg-green-500' : data.score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
+            scoreBar.className = 'h-full ' + scoreColor + ' transition-all duration-1000';
+            setTimeout(() => { scoreBar.style.width = data.score + '%'; }, 100);
             
             // Indicators
-            setIndicator('emotional', indicators.emotional || 'Unknown', indicators.emotional === 'Low');
-            setIndicator('sources', indicators.sources || 'Unknown', indicators.sources === 'Present');
-            setIndicator('bias', indicators.bias || 'Unknown', indicators.bias === 'Low');
-            setIndicator('factCheck', indicators.factCheck || 'Unknown', indicators.factCheck === 'Verified');
+            const indicators = data.indicators;
+            document.getElementById('emotional').textContent = indicators.emotional;
+            document.getElementById('emotional').className = 'text-lg font-bold ' + (indicators.emotional === 'Low' ? 'text-green-600' : 'text-red-600');
+            
+            document.getElementById('sources').textContent = indicators.sources;
+            document.getElementById('sources').className = 'text-lg font-bold ' + (indicators.sources === 'Present' ? 'text-green-600' : 'text-red-600');
+            
+            document.getElementById('bias').textContent = indicators.bias;
+            document.getElementById('bias').className = 'text-lg font-bold ' + 
+                (indicators.bias === 'Low' ? 'text-green-600' : indicators.bias === 'Moderate' ? 'text-yellow-600' : 'text-red-600');
+            
+            document.getElementById('factCheck').textContent = indicators.factCheck;
+            document.getElementById('factCheck').className = 'text-lg font-bold ' + 
+                (indicators.factCheck === 'Verified' ? 'text-green-600' : indicators.factCheck === 'Unverified' ? 'text-yellow-600' : 'text-red-600');
             
             // Recommendations
-            const recommendationsList = document.getElementById('recommendationsList');
-            recommendationsList.innerHTML = '';
-            const recommendations = data.recommendations || [];
-            recommendations.forEach(rec => {
+            const recList = document.getElementById('recommendationsList');
+            recList.innerHTML = '';
+            data.recommendations.forEach(rec => {
                 const li = document.createElement('li');
-                li.textContent = `• ${rec}`;
-                recommendationsList.appendChild(li);
+                li.textContent = '• ' + rec;
+                recList.appendChild(li);
             });
-        }
-
-        function setIndicator(id, value, isGood) {
-            const element = document.getElementById(id);
-            element.textContent = value;
-            
-            let colorClass;
-            if (id === 'bias') {
-                colorClass = value === 'Low' ? 'text-green-600' : value === 'Moderate' ? 'text-yellow-600' : 'text-red-600';
-            } else if (id === 'factCheck') {
-                colorClass = value === 'Verified' ? 'text-green-600' : value === 'Unverified' ? 'text-yellow-600' : 'text-red-600';
-            } else {
-                colorClass = isGood ? 'text-green-600' : 'text-red-600';
-            }
-            
-            element.className = `text-lg font-bold ${colorClass}`;
-        }
-
-        function getStatusColor(status) {
-            switch(status) {
-                case 'reliable': return 'text-green-600';
-                case 'questionable': return 'text-yellow-600';
-                case 'unreliable': return 'text-red-600';
-                default: return 'text-gray-600';
-            }
-        }
-
-        function getScoreBarColor(score) {
-            if (score >= 70) return 'bg-green-500';
-            if (score >= 40) return 'bg-yellow-500';
-            return 'bg-red-500';
         }
     </script>
 </body>
