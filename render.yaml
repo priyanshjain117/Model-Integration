@@ -12,4 +12,4 @@ services:
     autoDeploy: true 
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10 # Match your runtime.txt
+        value: 3.10.13 # Match your runtime.txt
