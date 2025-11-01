@@ -14,7 +14,7 @@ vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
 app = Flask(__name__)
 
 # -------------------------------------------------
-# 🔹 Text cleaning function (same as training preprocessing)
+# 🔹 Text cleaning function (same preprocessing as training)
 # -------------------------------------------------
 def clean_text(text):
     text = text.lower()
@@ -34,7 +34,7 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     # Get input text from form or JSON
-    text = request.form.get('news_text') or request.json.get('news_text')
+    text = request.form.get('news_text') or (request.json.get('news_text') if request.is_json else None)
     if not text:
         return jsonify({'error': 'No text provided'}), 400
 
@@ -42,15 +42,24 @@ def predict():
     cleaned_text = clean_text(text)
     vect_text = vectorizer.transform([cleaned_text])
 
-    # Predict probabilities and label
+    # Predict label and probability
     proba = model.predict_proba(vect_text)[0][1]  # Probability of being "Real"
-    result = 'Real News ✅' if proba > 0.6 else 'Fake News ❌'
+    prediction = model.predict(vect_text)[0]
 
-    # Return JSON if API call, else render HTML result
-    if request.is_json:
-        return jsonify({'prediction': result, 'probability': round(float(proba), 3)})
+    # Correct label meaning: 1 = Real, 0 = Fake
+    if prediction == 1:
+        result = "✅ This news article seems REAL."
     else:
-        return render_template('index.html', prediction=result, prob=round(float(proba), 3))
+        result = "🚨 This news article is likely FAKE!"
+
+    # Web or JSON response
+    if request.is_json:
+        return jsonify({
+            'prediction': result,
+            'probability_real': round(float(proba), 3)
+        })
+    else:
+        return render_template('index.html', prediction=result, prob=round(float(proba), 3), news_text=text)
 
 # -------------------------------------------------
 # 🔹 Run app

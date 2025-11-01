@@ -1,28 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Fake News Detector</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f2f2f2; text-align: center; padding: 40px; }
-    h2 { color: #333; }
-    textarea { width: 70%; height: 150px; margin: 20px 0; padding: 10px; font-size: 16px; }
-    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    .result { font-size: 20px; margin-top: 20px; }
-  </style>
+    <title>Fake News Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            text-align: center;
+            padding-top: 40px;
+        }
+        textarea {
+            width: 70%;
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        input[type=submit] {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            margin-top: 10px;
+        }
+        .result {
+            margin-top: 30px;
+            font-size: 20px;
+        }
+    </style>
 </head>
 <body>
-  <h2>📰 Fake News Detection</h2>
-  <form action="/predict" method="post">
-    <textarea name="news_text" placeholder="Enter your news text here..."></textarea><br>
-    <button type="submit">Check News</button>
-  </form>
+    <h2>📰 Fake News Detector</h2>
+    <form action="/predict" method="POST">
+        <textarea name="news_text" placeholder="Enter news content here...">{{ news_text or '' }}</textarea><br>
+        <input type="submit" value="Check News">
+    </form>
 
-  {% if prediction %}
-  <div class="result">
-    <strong>{{ prediction }}</strong><br>
-    Confidence: {{ prob }}
-  </div>
-  {% endif %}
+    {% if prediction %}
+    <div class="result">
+        <p><b>{{ prediction }}</b></p>
+        <p>Confidence: {{ prob }}</p>
+    </div>
+    {% endif %}
 </body>
 </html>

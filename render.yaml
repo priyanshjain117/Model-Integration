@@ -1,8 +1,15 @@
 services:
   - type: web
-    name: fake-news-detector
+    name: fake-news-detector # You can name this whatever you like
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app"
-    pythonVersion: 3.10.13
-    plan: free
+    runtime: python # This will use the version from runtime.txt
+    plan: free # Use the free tier (be aware of memory limits!)
+    
+    buildCommand: ./build.sh
+    startCommand: gunicorn --workers 4 --bind 0.0.0.0:$PORT app:app
+
+    # This section syncs your files
+    autoDeploy: true 
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10 # Match your runtime.txt
